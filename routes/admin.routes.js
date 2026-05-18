@@ -18,6 +18,13 @@ const {
   deleteSubcategory,
   toggleSubcategoryActive,
 } = require("../controllers/admin.controller");
+const {
+  getCollections,
+  createCollection,
+  updateCollection,
+  deleteCollection,
+  toggleCollectionActive,
+} = require("../controllers/collection.controller");
 const { getTestimonials } = require("../controllers/testimonial.controller");
 const admin = require("../middlewares/admin.middleware");
 
@@ -41,6 +48,10 @@ router.patch("/categories/:id/toggle-active", toggleCategoryActive);
 router.route("/subcategories").post(createSubcategory).get(getSubcategories);
 router.route("/subcategories/:id").put(updateSubcategory).delete(deleteSubcategory);
 router.patch("/subcategories/:id/toggle-active", toggleSubcategoryActive);
+
+router.route("/collections").post(createCollection).get(getCollections);
+router.route("/collections/:id").put(updateCollection).delete(deleteCollection);
+router.patch("/collections/:id/toggle-active", toggleCollectionActive);
 
 module.exports = router;
 

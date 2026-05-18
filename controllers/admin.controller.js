@@ -189,9 +189,7 @@ exports.updateTestimonialStatus = catchAsync(async (req, res, next) => {
 exports.getSalesReport = catchAsync(async (req, res, next) => {
   const { startDate, endDate } = req.query;
 
-  const filter = {
-    status: { $in: ["received", "shipped"] },
-  };
+  const filter = {};
 
   if (startDate || endDate) {
     filter.createdAt = {};
@@ -348,9 +346,7 @@ exports.toggleSubcategoryActive = catchAsync(async (req, res, next) => {
 exports.exportSalesReport = catchAsync(async (req, res, next) => {
   const { startDate, endDate } = req.query;
 
-  const filter = {
-    status: { $in: ["received", "shipped"] },
-  };
+  const filter = {};
 
   if (startDate || endDate) {
     filter.createdAt = {};
@@ -360,17 +356,19 @@ exports.exportSalesReport = catchAsync(async (req, res, next) => {
 
   const orders = await Order.find(filter)
     .populate("userId", "name mobile")
-    .select("totalPrice status createdAt products userId")
+    .select("totalPrice status createdAt products userId address phoneNumber")
     .sort("-createdAt");
 
   const flatData = orders.map(order => ({
     orderId: order._id,
     customer: order.userId ? order.userId.name : "Guest",
-    mobile: order.userId ? order.userId.mobile : "N/A",
+    mobile: order.phoneNumber || (order.userId ? order.userId.mobile : "N/A"),
+    address: order.address,
     date: order.createdAt.toISOString().split("T")[0],
     total: order.totalPrice,
     status: order.status,
-    productCount: order.products.length
+    productCount: order.products.length,
+    productNames: order.products.map(p => `${p.name} (x${p.quantity})`).join(", ")
   }));
 
   res.status(200).json({

@@ -32,11 +32,12 @@ exports.addToCart = catchAsync(async (req, res, next) => {
     return next(new AppError("Product not found or unavailable", 404));
   }
 
-  if (product.stock < quantity) {
-    return next(new AppError("Insufficient stock", 400));
-  }
-
   let cartItem = await CartItem.findOne({ userId: req.user.id, productId });
+  const currentQty = cartItem ? cartItem.quantity : 0;
+
+  if (product.stock < currentQty + Number(quantity)) {
+    return next(new AppError(`Only ${product.stock} items available in stock`, 400));
+  }
 
   if (cartItem) {
     cartItem.quantity += Number(quantity);
@@ -65,6 +66,11 @@ exports.updateCartItem = catchAsync(async (req, res, next) => {
 
   if (!cartItem) {
     return next(new AppError("Cart item not found", 404));
+  }
+
+  const product = await Product.findById(cartItem.productId);
+  if (product.stock < Number(quantity)) {
+    return next(new AppError(`Only ${product.stock} items available in stock`, 400));
   }
 
   cartItem.quantity = Number(quantity);
@@ -126,4 +132,12 @@ exports.syncGuestCart = catchAsync(async (req, res, next) => {
 
   const updatedCart = await CartItem.find({ userId: req.user.id }).populate("productId");
   res.json({ success: true, message: "Cart synced", data: updatedCart });
+});
+
+// @desc    Clear entire cart
+// @route   DELETE /api/v1/cart
+// @access  Private
+exports.clearCart = catchAsync(async (req, res, next) => {
+  await CartItem.deleteMany({ userId: req.user.id });
+  res.json({ success: true, message: "Cart cleared successfully" });
 });

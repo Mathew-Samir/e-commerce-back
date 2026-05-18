@@ -16,7 +16,7 @@ const {
 } = require("../controllers/product.controller");
 
 // Public
-router.get("/",protect, getProducts);
+router.get("/", getProducts);
 router.get("/new-arrivals", getNewArrivals);
 router.get("/best-sellers", getBestSellers);
 router.get("/:id", getProductById);

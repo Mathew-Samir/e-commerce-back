@@ -101,3 +101,50 @@ exports.markAsViewed = catchAsync(async (req, res, next) => {
 
   res.status(200).json({ success: true, data: testimonial });
 });
+
+// @desc    Approve testimonial (Admin)
+// @route   PATCH /api/v1/testimonials/admin/:id/approve
+// @access  Private/Admin
+exports.approveTestimonial = catchAsync(async (req, res, next) => {
+  const testimonial = await Testimonial.findByIdAndUpdate(
+    req.params.id,
+    { status: "approved", isApproved: true },
+    { new: true }
+  );
+
+  if (!testimonial) {
+    return next(new AppError("Testimonial not found", 404));
+  }
+
+  res.status(200).json({ success: true, data: testimonial });
+});
+
+// @desc    Reject testimonial (Admin)
+// @route   PATCH /api/v1/testimonials/admin/:id/reject
+// @access  Private/Admin
+exports.rejectTestimonial = catchAsync(async (req, res, next) => {
+  const testimonial = await Testimonial.findByIdAndUpdate(
+    req.params.id,
+    { status: "rejected", isApproved: false },
+    { new: true }
+  );
+
+  if (!testimonial) {
+    return next(new AppError("Testimonial not found", 404));
+  }
+
+  res.status(200).json({ success: true, data: testimonial });
+});
+
+// @desc    Delete testimonial (Admin)
+// @route   DELETE /api/v1/testimonials/admin/:id
+// @access  Private/Admin
+exports.deleteTestimonial = catchAsync(async (req, res, next) => {
+  const testimonial = await Testimonial.findByIdAndDelete(req.params.id);
+
+  if (!testimonial) {
+    return next(new AppError("Testimonial not found", 404));
+  }
+
+  res.status(200).json({ success: true, data: null });
+});

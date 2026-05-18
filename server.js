@@ -34,6 +34,7 @@ app.use("/api/v1/testimonials", require("./routes/testimonial.routes"));
 app.use("/api/v1/admin", require("./routes/admin.routes"));
 app.use("/api/v1/refunds", require("./routes/refund.routes"));
 app.use("/api/v1/addresses", require("./routes/address.routes"));
+app.use("/api/v1/collections", require("./routes/collection.routes"));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // 404 handler

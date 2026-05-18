@@ -39,6 +39,11 @@ const productSchema = new mongoose.Schema(
       ref: "Subcategory",
       required: true,
     },
+    collectionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Collection",
+      default: null,
+    },
     isDeleted: {
       type: Boolean,
       default: false, // Soft delete
@@ -58,5 +63,6 @@ const productSchema = new mongoose.Schema(
 // Index for faster search & filtering
 productSchema.index({ name: "text", categoryId: 1, subCategoryId: 1 });
 productSchema.index({ isActive: 1, isDeleted: 1, createdAt: -1 });
+productSchema.index({ collectionId: 1, isActive: 1, isDeleted: 1 });
 
 module.exports = mongoose.model("Product", productSchema);

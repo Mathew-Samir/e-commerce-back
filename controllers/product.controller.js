@@ -52,6 +52,7 @@ exports.getProducts = catchAsync(async (req, res, next) => {
     Product.find(filter)
       .populate("categoryId", "title")
       .populate("subCategoryId", "title")
+      .populate("collectionId", "name title")
       .sort(sortQuery)
       .skip(skip)
       .limit(Number(limit)),
@@ -74,7 +75,8 @@ exports.getProducts = catchAsync(async (req, res, next) => {
 exports.getProductById = catchAsync(async (req, res, next) => {
   const product = await Product.findById(req.params.id)
     .populate("categoryId", "title")
-    .populate("subCategoryId", "title");
+    .populate("subCategoryId", "title")
+    .populate("collectionId", "name title");
 
   if (!product || product.isDeleted || !product.isActive) {
     return next(new AppError("Product not found", 404));
@@ -97,7 +99,8 @@ exports.getNewArrivals = catchAsync(async (req, res, next) => {
     .sort({ createdAt: -1 })
     .limit(Number(limit))
     .populate("categoryId", "title")
-    .populate("subCategoryId", "title");
+    .populate("subCategoryId", "title")
+    .populate("collectionId", "name title");
 
   res.json({ success: true, count: products.length, data: products });
 });
@@ -116,7 +119,8 @@ exports.getBestSellers = catchAsync(async (req, res, next) => {
     .sort({ salesCount: -1 })
     .limit(Number(limit))
     .populate("categoryId", "title")
-    .populate("subCategoryId", "title");
+    .populate("subCategoryId", "title")
+    .populate("collectionId", "name title");
 
   res.json({ success: true, count: products.length, data: products });
 });
@@ -127,7 +131,7 @@ exports.getBestSellers = catchAsync(async (req, res, next) => {
 // @route   POST /api/v1/products
 // @access  Private/Admin
 exports.createProduct = catchAsync(async (req, res, next) => {
-  const { name, description, price, stock, categoryId, subCategoryId } =
+  const { name, description, price, stock, categoryId, subCategoryId, collectionId } =
     req.body;
 
   if (!req.file) {
@@ -154,7 +158,7 @@ exports.createProduct = catchAsync(async (req, res, next) => {
 
   const imageUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
 
-  const product = await Product.create({
+  const productData = {
     name,
     description,
     price: Number(price),
@@ -162,7 +166,13 @@ exports.createProduct = catchAsync(async (req, res, next) => {
     categoryId,
     subCategoryId,
     image: imageUrl,
-  });
+  };
+
+  if (collectionId) {
+    productData.collectionId = collectionId;
+  }
+
+  const product = await Product.create(productData);
 
   res.status(201).json({ success: true, message: "Product created", data: product });
 });
@@ -235,7 +245,8 @@ exports.getRelatedProducts = catchAsync(async (req, res, next) => {
   })
   .limit(10)
   .populate("categoryId", "title")
-  .populate("subCategoryId", "title");
+  .populate("subCategoryId", "title")
+  .populate("collectionId", "name title");
 
   res.json({ success: true, count: related.length, data: related });
 });

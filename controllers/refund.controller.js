@@ -45,3 +45,45 @@ exports.getMyRefunds = catchAsync(async (req, res, next) => {
   const refunds = await Refund.find({ userId: req.user.id }).sort("-createdAt");
   res.status(200).json({ success: true, count: refunds.length, data: refunds });
 });
+
+// @desc    Get all refund requests (Admin)
+// @route   GET /api/v1/refunds
+// @access  Private/Admin
+exports.getAllRefunds = catchAsync(async (req, res, next) => {
+  const refunds = await Refund.find()
+    .populate("userId", "name email")
+    .populate("orderId", "_id status totalPrice")
+    .sort("-createdAt");
+  res.status(200).json({ success: true, count: refunds.length, data: refunds });
+});
+
+// @desc    Approve refund request
+// @route   PATCH /api/v1/refunds/:id/approve
+// @access  Private/Admin
+exports.approveRefund = catchAsync(async (req, res, next) => {
+  const refund = await Refund.findById(req.params.id);
+  if (!refund) return next(new AppError("Refund request not found", 404));
+
+  refund.status = "approved";
+  await refund.save();
+
+  // Also update order status to 'refunded'
+  await Order.findByIdAndUpdate(refund.orderId, { status: "refunded" });
+
+  res.status(200).json({ success: true, data: refund });
+});
+
+// @desc    Refuse refund request
+// @route   PATCH /api/v1/refunds/:id/refuse
+// @access  Private/Admin
+exports.refuseRefund = catchAsync(async (req, res, next) => {
+  const { reason } = req.body;
+  const refund = await Refund.findById(req.params.id);
+  if (!refund) return next(new AppError("Refund request not found", 404));
+
+  refund.status = "rejected";
+  if (reason) refund.adminResponse = reason;
+  await refund.save();
+
+  res.status(200).json({ success: true, data: refund });
+});

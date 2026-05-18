@@ -6,6 +6,7 @@ const {
   updateCartItem,
   removeFromCart, // Hard delete only
   syncGuestCart,
+  clearCart,
 } = require("../controllers/cart.controller");
 const user = require("../middlewares/user.middleware");
 
@@ -15,6 +16,7 @@ router.get("/", getCart);
 router.post("/", addToCart);
 router.put("/:itemId", updateCartItem);
 router.delete("/:itemId", removeFromCart);
+router.delete("/", clearCart);
 router.post("/sync", syncGuestCart); // Merge guest cart on login
 
 module.exports = router;
