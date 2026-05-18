@@ -15,9 +15,9 @@ exports.requestRefund = catchAsync(async (req, res, next) => {
     return next(new AppError("Order not found", 404));
   }
 
-  // 2. Check if eligible (shipped or received)
+  // 2. Check if eligible (received)
   if (!order.isEligibleForRefund()) {
-    return next(new AppError("Order is not eligible for refund. Only shipped or received orders can be refunded.", 400));
+    return next(new AppError("Order is not eligible for refund. Only received orders can be refunded.", 400));
   }
 
   // 3. Prevent duplicate requests
