@@ -5,7 +5,6 @@ const collectionSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
       lowercase: true,
       minlength: 2,
@@ -40,6 +39,12 @@ const collectionSchema = new mongoose.Schema(
     },
   },
   { timestamps: true },
+);
+
+// Unique index for active collections to allow reuse of names of deleted collections
+collectionSchema.index(
+  { name: 1 },
+  { unique: true, partialFilterExpression: { isDeleted: false } }
 );
 
 // Optimized index for querying currently active collections

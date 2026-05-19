@@ -227,10 +227,13 @@ exports.deleteCollection = catchAsync(async (req, res, next) => {
     return next(new AppError("Collection not found", 404));
   }
 
-  // Remove collection reference from products
+  // Remove collection reference from products and deactivate them
   await Product.updateMany(
     { collectionId: req.params.id },
-    { $unset: { collectionId: "" } },
+    {
+      $unset: { collectionId: "" },
+      $set: { isActive: false },
+    },
   );
 
   res.json({
