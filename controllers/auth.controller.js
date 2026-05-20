@@ -95,14 +95,24 @@ exports.login = catchAsync(async (req, res, next) => {
   // check password
   const isMatch = await user.comparePassword(password);
   if (!isMatch) {
+    const now = Date.now();
+    const cooldownWindow = 15 * 60 * 1000; // 15 minutes
+
+    // Reset loginAttempts if the last failed attempt was more than 15 minutes ago
+    if (user.lastFailedAttempt && (now - user.lastFailedAttempt > cooldownWindow)) {
+      user.loginAttempts = 0;
+    }
+
     user.loginAttempts += 1;
+    user.lastFailedAttempt = now;
+
     if (user.loginAttempts >= 5) {
-      user.lockUntil = Date.now() + 15 * 60 * 1000;
+      user.lockUntil = now + 15 * 60 * 1000;
       user.loginAttempts = 0;
     }
     await user.save();
 
-    if (user.lockUntil && user.lockUntil > Date.now()) {
+    if (user.lockUntil && user.lockUntil > now) {
       return next(
         new AppError(
           "Too many failed attempts. Account locked for 15 minutes.",
@@ -117,6 +127,8 @@ exports.login = catchAsync(async (req, res, next) => {
   // Reset attempts on successful login
   user.loginAttempts = 0;
   user.lockUntil = undefined;
+  user.lastFailedAttempt = undefined;
+  await user.save();
 
   // CART MERGE LOGIC (SRS Requirement: max(serverQty + guestQty, stock))
   if (guestCart && Array.isArray(guestCart)) {

@@ -56,10 +56,10 @@ orderSchema.index({ status: 1, createdAt: -1 }); // Admin filtering & reports
 
 /**
  * Check if order is eligible for refund request
- * @returns {Boolean} true if status is 'shipped' or 'received'
+ * @returns {Boolean} true if status is 'received'
  */
 orderSchema.methods.isEligibleForRefund = function () {
-  return ["shipped", "received"].includes(this.status);
+  return this.status === "received";
 };
 
 /**
@@ -80,7 +80,7 @@ orderSchema.methods.canBeCancelledByUser = function () {
 orderSchema.statics.getEligibleForRefund = async function (userId) {
   return await this.find({
     userId,
-    status: { $in: ["shipped", "received"] },
+    status: "received",
   });
 };
 

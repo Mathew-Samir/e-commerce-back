@@ -49,6 +49,9 @@ const userSchema = new mongoose.Schema(
     lockUntil: {
       type: Date,
     },
+    lastFailedAttempt: {
+      type: Date,
+    },
     termsAccepted: {
       type: Boolean,
       required: true,
