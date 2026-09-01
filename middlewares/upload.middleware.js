@@ -1,22 +1,9 @@
 const multer = require("multer");
 const path = require("path");
-const fs = require("fs");
+const cloudinary = require("../config/cloudinary");
 
-const uploadDir = path.join(__dirname, "../uploads");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => {
-    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(
-      null,
-      `${file.fieldname}-${uniqueName}${path.extname(file.originalname)}`,
-    );
-  },
-});
+// Use memory storage — files stay in RAM as buffers (Vercel-compatible)
+const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
   const allowed = /jpeg|jpg|png|webp/;
@@ -34,4 +21,27 @@ const upload = multer({
   fileFilter,
 });
 
-module.exports = upload;
+/**
+ * Upload a buffer to Cloudinary.
+ * @param {Buffer} fileBuffer - The file buffer from multer memoryStorage
+ * @param {string} folder - Cloudinary folder name (e.g. "products")
+ * @returns {Promise<{url: string, publicId: string}>}
+ */
+const uploadToCloudinary = (fileBuffer, folder = "products") => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder,
+        resource_type: "image",
+        transformation: [{ quality: "auto", fetch_format: "auto" }],
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve({ url: result.secure_url, publicId: result.public_id });
+      },
+    );
+    stream.end(fileBuffer);
+  });
+};
+
+module.exports = { upload, uploadToCloudinary };

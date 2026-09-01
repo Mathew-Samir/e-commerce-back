@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const upload = require("../middlewares/upload.middleware");
+const { upload } = require("../middlewares/upload.middleware");
 const protect = require("../middlewares/auth.middleware");
 const admin = require("../middlewares/admin.middleware");
 const {

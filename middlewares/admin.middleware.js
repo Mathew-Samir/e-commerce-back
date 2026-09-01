@@ -8,7 +8,7 @@ module.exports = catchAsync(async (req, res, next) => {
 
   if (
     req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
+    req.headers.authorization.toLowerCase().startsWith("bearer")
   ) {
     token = req.headers.authorization.split(" ")[1];
   } else if (req.cookies && req.cookies.accessToken) {

@@ -6,6 +6,18 @@ const Product = require("../models/product.model");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/AppError");
 
+/**
+ * Build consistent cookie options for cross-origin Vercel deployment.
+ * In production: secure + sameSite=none (required for cross-origin cookies).
+ * In development: standard lax policy.
+ */
+const getCookieOptions = () => ({
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+});
+
 exports.register = catchAsync(async (req, res, next) => {
   const { name, mobile, email, password, gender, emailConsent, termsAccepted } =
     req.body;
@@ -51,19 +63,16 @@ exports.register = catchAsync(async (req, res, next) => {
     { expiresIn: "7d" },
   );
 
-  // Set cookie
-  res.cookie("accessToken", accessToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-  });
+  // Set cookie (cross-origin safe)
+  res.cookie("accessToken", accessToken, getCookieOptions());
 
   const newUser = await User.findById(user._id).select("-password");
 
+  // Return token in response body so the frontend can store it in localStorage
   res.status(201).json({
     success: true,
     message: "User created",
+    token: accessToken,
     user: newUser,
   });
 });
@@ -170,19 +179,16 @@ exports.login = catchAsync(async (req, res, next) => {
     { expiresIn: "7d" },
   );
 
-  // Set cookie
-  res.cookie("accessToken", accessToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-  });
+  // Set cookie (cross-origin safe)
+  res.cookie("accessToken", accessToken, getCookieOptions());
 
   user.password = undefined;
 
+  // Return token in response body so the frontend can store it in localStorage
   res.json({
     success: true,
     message: "Login success",
+    token: accessToken,
     user,
   });
 });
@@ -191,7 +197,7 @@ exports.logout = catchAsync(async (req, res, next) => {
   res.clearCookie("accessToken", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   });
   res.status(200).json({ success: true, message: "Logged out successfully" });
 });

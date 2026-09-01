@@ -3,6 +3,7 @@ const Category = require("../models/category.model");
 const Subcategory = require("../models/subcategory.model");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/AppError");
+const { uploadToCloudinary } = require("../middlewares/upload.middleware");
 
 // ============ PUBLIC ROUTES ============
 
@@ -127,7 +128,7 @@ exports.getBestSellers = catchAsync(async (req, res, next) => {
 
 // ============ ADMIN ROUTES ============
 
-// @desc    Create new product (with image upload)
+// @desc    Create new product (with image upload to Cloudinary)
 // @route   POST /api/v1/products
 // @access  Private/Admin
 exports.createProduct = catchAsync(async (req, res, next) => {
@@ -156,7 +157,8 @@ exports.createProduct = catchAsync(async (req, res, next) => {
     return next(new AppError("Invalid or mismatched subcategory", 400));
   }
 
-  const imageUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+  // Upload image buffer to Cloudinary
+  const { url: imageUrl } = await uploadToCloudinary(req.file.buffer, "products");
 
   const productData = {
     name,
@@ -185,8 +187,11 @@ exports.updateProduct = catchAsync(async (req, res, next) => {
   if (!product) return next(new AppError("Product not found", 404));
 
   const updateData = { ...req.body };
+
+  // Upload new image to Cloudinary if provided
   if (req.file) {
-    updateData.image = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+    const { url: imageUrl } = await uploadToCloudinary(req.file.buffer, "products");
+    updateData.image = imageUrl;
   }
 
   Object.assign(product, updateData);
